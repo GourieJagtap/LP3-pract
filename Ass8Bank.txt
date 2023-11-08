@@ -1,0 +1,39 @@
+pip install imbalanced-learn
+
+import pandas as pd
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score
+from sklearn.metrics import classification_report
+from imblearn.over_sampling import RandomOverSampler
+
+df = pd.read_csv('Churn_Modelling.csv')
+df
+
+df.head()
+
+df.isnull().sum()
+
+df.shape
+
+x = df[['CreditScore','Age','Tenure','Balance','NumOfProducts','HasCrCard','IsActiveMember']]
+y = df['Exited']
+
+ros = RandomOverSampler(random_state=0)
+x_res, y_res = ros.fit_resample(x, y)
+
+scaler = StandardScaler()
+x_scaled = scaler.fit_transform(x_res)
+
+x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=0, test_size=0.2)
+
+ann = MLPClassifier(hidden_layer_sizes=(100, 100, 100), random_state=0, max_iter=100)
+ann.fit(x_train, y_train)
+
+y_pred = ann.predict(x_test)
+
+ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+accuracy_score(y_test, y_pred)
+print(classification_report(y_test, y_pred))

@@ -1,0 +1,106 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as mat
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report,ConfusionMatrixDisplay
+
+df = pd.read_csv('emails.csv')
+df
+
+df.head(7)
+
+df.shape
+
+null_values = df.isnull()
+null_values
+
+count = null_values.sum()
+count
+
+x = df.drop(['Email No.','Prediction'],axis=1)
+y = df['Prediction']
+
+sns.countplot(x=y)
+
+y.value_counts()
+
+scaler = MinMaxScaler()
+
+result = scaler.fit_transform(x)
+
+x_train, x_test,y_train, y_test = train_test_split(result,y,random_state = 0,test_size = 0.2)
+
+knn = KNeighborsClassifier(n_neighbors = 5)
+
+knn.fit(x_train,y_train)
+
+y_pred = knn.predict(x_test)
+
+ConfusionMatrixDisplay.from_predictions(y_test,y_pred)
+
+Accuracy_knn = accuracy_score(y_test,y_pred)
+Accuracy_knn
+
+print(classification_report(y_test,y_pred))
+
+sns.countplot(x=y)
+
+scaler = MinMaxScaler()
+
+x_scaled = scaler.fit_transform(x)
+
+feature1_index = 0
+feature2_index = 1
+
+x_selected_features = x_scaled[:,[feature1_index, feature2_index]]
+
+X_train, X_test, Y_train, Y_test = train_test_split(x_selected_features, y, random_state = 0, test_size = 0.2)
+
+svm_classifier = svm.SVC(kernel = 'linear')
+
+svm_classifier.fit(X_train,Y_train)
+
+y_svm_pred = svm_classifier.predict(X_test)
+
+ConfusionMatrixDisplay.from_predictions(Y_test,y_svm_pred)
+
+Accuracy_svm = accuracy_score(Y_test,y_svm_pred)
+Accuracy_svm
+
+print(classification_report(Y_test,y_svm_pred))
+
+x_min , x_max = x_selected_features[:,0].min()-0.1 ,x_selected_features[:,0].max()+0.1
+y_min , y_max = x_selected_features[:,1].min()-0.1 ,x_selected_features[:,1].max()+0.1
+xx, yy = np.meshgrid(np.linspace(x_min,x_max,500),np.linspace(y_min,y_max,500))
+z = svm_classifier.decision_function(np.c_[xx.ravel(),yy.ravel()])
+z = z.reshape(xx.shape)
+mat.contourf(xx,yy,z,levels=[-1,0,1],alpha = 0.5,cmap=mat.cm.Paired)
+mat.scatter(x_selected_features[:, 0], x_selected_features[:, 1], c=y, cmap=mat.cm.Paired)
+mat.xlabel(f'Feature {feature1_index + 1}')
+mat.ylabel(f'Feature {feature2_index + 1}')
+mat.title('SVM Decision Boundary')
+mat.show()
+
+models = ['KNN', 'SVM']
+accuracies = [Accuracy_knn, Accuracy_svm]
+
+mat.figure(figsize=(8, 6))
+mat.bar(models, accuracies, color=['blue', 'green'])
+mat.xlabel('Models')
+mat.ylabel('Accuracy')
+mat.title('Accuracy Comparison: KNN vs. SVM')
+mat.ylim(0, 1)  # Set the y-axis range from 0 to 1 for accuracy
+
+# Display the most accurate model
+most_accurate_model = 'KNN' if Accuracy_knn > Accuracy_svm else 'SVM'
+# mat.annotate(f'Most Accurate Model: {most_accurate_model}', (0.5, 0.9), color='red', fontsize=12)
+print("Most accurate model is :",most_accurate_model)
+
+mat.show()
+print("Accuracy of KNN :- ",Accuracy_knn)
+print("Accuracy of SVM :- ",Accuracy_svm)
+
